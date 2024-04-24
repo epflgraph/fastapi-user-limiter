@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastapi_user_limiter"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
   { name="Ramtin Yazdanian", email="ramtin.yazdanian@epfl.ch" }
 ]
 description = "Rate-limiter for FastAPI with the possibility of user-based rate limits"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -20,7 +20,7 @@ dependencies = [
   "fastapi[all]",
   "redis"
 ]
-#
-#[project.urls]
-#"Homepage" = "https://github.com/epflgraph/db-cache-manager"
-#"Bug Tracker" = "https://github.com/epflgraph/db-cache-manager/issues"
+
+[project.urls]
+"Homepage" = "https://github.com/epflgraph/fastapi-user-limiter"
+"Bug Tracker" = "https://github.com/epflgraph/fastapi-user-limiter/issues"
