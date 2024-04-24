@@ -2,6 +2,13 @@
 
 This package adds a rate limiter to FastAPI using Redis.
 
+## Installation
+
+First install Redis, then install the package using:
+```
+pip install fastapi-user-limiter
+```
+
 ## Usage
 
 An example of how to use the rate limiter can be found in `example.py`:
