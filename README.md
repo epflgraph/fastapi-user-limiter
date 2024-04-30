@@ -14,23 +14,23 @@ pip install fastapi-user-limiter
 You can use the `rate_limit` function as a FastAPI Dependency to add one or several rate limiters to an endpoint:
 
 ```python
-from fastapi_user_limiter.limiter import RateLimiter, rate_limit
+from fastapi_user_limiter.limiter import RateLimiterConnection, rate_limiter
 from fastapi import FastAPI, Depends
 
 app = FastAPI()
-rate_limiter = RateLimiter()
+
 
 # Max 2 requests per 5 seconds
 @app.get("/single",
-         dependencies=[Depends(rate_limit(rate_limiter, 2, 5))])
+         dependencies=[Depends(rate_limiter(RateLimiterConnection(), 2, 5))])
 async def read_single():
     return {"Hello": "World"}
 
 
 # Max 1 requests per second and max 3 requests per 10 seconds
 @app.get("/multi/{some_param}", dependencies=[
-    Depends(rate_limit(rate_limiter, 1, 1)),
-    Depends(rate_limit(rate_limiter, 3, 10))
+    Depends(rate_limiter(RateLimiterConnection(), 1, 1)),
+    Depends(rate_limiter(RateLimiterConnection(), 3, 10))
 ])
 async def read_multi(some_param: str):
     return {"Hello": f"There {some_param}"}
