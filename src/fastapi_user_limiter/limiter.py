@@ -60,6 +60,11 @@ class RateLimiter:
         return results[1] >= max_requests
 
 
+def get_rate_limited_message(max_requests, window):
+    return (f"Too many requests, no more than {max_requests} requests "
+            f"are allowed every {window} seconds.")
+
+
 def rate_limit(rate_limiter: RateLimiter, max_requests: int, window: int):
     def decorator(func):
         @wraps(func)
@@ -68,7 +73,7 @@ def rate_limit(rate_limiter: RateLimiter, max_requests: int, window: int):
             if await rate_limiter.is_rate_limited(key, max_requests, window):
                 raise HTTPException(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail="Too many requests"
+                    detail=get_rate_limited_message(max_requests, window)
                 )
             return await func(request, *args, **kwargs)
         return wrapper
