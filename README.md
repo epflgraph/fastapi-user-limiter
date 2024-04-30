@@ -14,6 +14,9 @@ pip install fastapi-user-limiter
 You can use the `rate_limit` decorator to put a single rate limit on an endpoint:
 
 ```python
+from fastapi_user_limiter.limiter import RateLimiter, rate_limit, multi_rate_limit
+from fastapi import FastAPI, Request
+
 app = FastAPI()
 rate_limiter = RateLimiter()
 
@@ -30,6 +33,9 @@ To put multiple rate limits on the same endpoint (with different window size and
 This ID must be unique among the `multi_rate_limit` decorators on that endpoint:
 
 ```python
+from fastapi_user_limiter.limiter import RateLimiter, rate_limit, multi_rate_limit
+from fastapi import FastAPI, Request
+
 app = FastAPI()
 rate_limiter = RateLimiter()
 
