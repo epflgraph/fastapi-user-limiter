@@ -78,3 +78,18 @@ def rate_limit(rate_limiter: RateLimiter, max_requests: int, window: int):
             return await func(request, *args, **kwargs)
         return wrapper
     return decorator
+
+
+def multi_rate_limit(limiter_id: int, rate_limiter: RateLimiter, max_requests: int, window: int):
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(request: Request, *args, **kwargs):
+            key = f"rate_limit:{request.client.host}:{request.url.path}:{limiter_id}"
+            if await rate_limiter.is_rate_limited(key, max_requests, window):
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=get_rate_limited_message(max_requests, window)
+                )
+            return await func(request, *args, **kwargs)
+        return wrapper
+    return decorator
