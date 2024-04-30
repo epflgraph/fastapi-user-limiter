@@ -16,10 +16,24 @@ class RateLimiter:
         self.redis = None
 
     async def init_redis(self):
+        """
+        Initializes the Redis connection
+        :return: None
+        """
         if self.redis is None or not await self.redis.ping():
             self.redis = await redis.from_url(self.redis_url)
 
     async def is_rate_limited(self, key: str, max_requests: int, window: int) -> bool:
+        """
+        Given a key (client host + endpoint url), determines whether the rate limit has been reached
+        :param key: Key consisting of client host plus endpoint URL
+        :param max_requests: Maximum allowed # of requests in the given window
+        :param window: Time window for rate limit
+        :return: True if rate limited
+        """
+        # Negative max_requests values disable rate-limiting
+        if max_requests < 0:
+            return False
         current_time = time.time()
         current_time_key = (('%.06f' % current_time).replace('.', '')
                             + '%08d' % random.randint(0, int(1e7)))
