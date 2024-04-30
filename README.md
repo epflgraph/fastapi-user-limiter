@@ -11,24 +11,39 @@ pip install fastapi-user-limiter
 
 ## Usage
 
-An example of how to use the rate limiter can be found in `example.py`:
+You can use the `rate_limit` decorator to put a single rate limit on an endpoint:
+
+```python
+app = FastAPI()
+rate_limiter = RateLimiter()
+
+# 2 requests max per 5 seconds
+@app.get("/single")
+@rate_limit(rate_limiter, 2, 5)
+async def read_single(request: Request):
+    return {"Hello": "World"}
 
 ```
-from fastapi_user_limiter.limiter import RateLimiter, rate_limit
-from fastapi import FastAPI, Request
 
+To put multiple rate limits on the same endpoint (with different window size and maximum request counts), use the
+`multi_rate_limit` decorator. Each `multi_rate_limit` decorator on a particular endpoint requires an ID as its first arg.
+This ID must be unique among the `multi_rate_limit` decorators on that endpoint:
 
+```python
 app = FastAPI()
 rate_limiter = RateLimiter()
 
 
-@app.get("/")
-@rate_limit(rate_limiter, 5, 60)
-async def read_root(request: Request):
-    return {"Hello": "World"}
+# 1 request max per second, 3 requests max per 10 seconds
+@app.get("/multi")
+@multi_rate_limit(1, rate_limiter, 1, 1)
+@multi_rate_limit(2, rate_limiter, 3, 10)
+async def read_multi(request: Request):
+    return {"Hello": "There"}
 ```
 
-Every endpoint handler with the rate limiter decorator needs to have `request` (of type `fastapi.Request`) as its first argument.
+
+**NOTE**: Every endpoint handler with the rate limiter decorator needs to have `request` (of type `fastapi.Request`) as its first argument.
 
 ## Future features
 
