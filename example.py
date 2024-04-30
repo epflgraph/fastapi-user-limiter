@@ -12,8 +12,14 @@ async def read_single(request: Request):
     return {"Hello": "World"}
 
 
-@app.get("/multi")
+@app.get("/multi/{some_param}")
 @multi_rate_limit(1, rate_limiter, 1, 1)
 @multi_rate_limit(2, rate_limiter, 3, 10)
-async def read_multi(request: Request):
-    return {"Hello": "There"}
+async def read_multi(request: Request, some_param: str):
+    return {"Hello": f"There {some_param}"}
+
+
+@app.post("/single_post")
+@rate_limit(rate_limiter, 4, 10)
+async def read_single(request: Request, data: dict):
+    return {'input': data}
