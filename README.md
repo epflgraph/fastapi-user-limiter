@@ -51,7 +51,8 @@ async def read_multi(request: Request):
 The aforementioned examples can be found in `example.py` (use ` uvicorn example:app --reload` to run).
 
 
-**NOTE**: Every endpoint handler with the rate limiter decorator needs to have `request` (of type `fastapi.Request`) as its first argument.
+**NOTE**: Every endpoint handler with the rate limiter decorator needs to have `request` (of type `fastapi.Request`) as
+one of its arguments.
 
 ## Future features
 
