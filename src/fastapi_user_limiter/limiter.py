@@ -3,6 +3,7 @@ from fastapi import Request, HTTPException, status
 import time
 from functools import wraps
 import random
+from typing import Annotated
 
 
 DEFAULT_REDIS_URL = 'redis://localhost:6379/1'
@@ -65,31 +66,12 @@ def get_rate_limited_message(max_requests, window):
             f"are allowed every {window} seconds.")
 
 
-def rate_limit(rate_limiter: RateLimiter, max_requests: int, window: int):
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(request: Request, *args, **kwargs):
-            key = f"rate_limit:{request.client.host}:{request.url.path}"
-            if await rate_limiter.is_rate_limited(key, max_requests, window):
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail=get_rate_limited_message(max_requests, window)
-                )
-            return await func(request, *args, **kwargs)
-        return wrapper
-    return decorator
-
-
-def multi_rate_limit(limiter_id: int, rate_limiter: RateLimiter, max_requests: int, window: int):
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(request: Request, *args, **kwargs):
-            key = f"rate_limit:{request.client.host}:{request.url.path}:{limiter_id}"
-            if await rate_limiter.is_rate_limited(key, max_requests, window):
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail=get_rate_limited_message(max_requests, window)
-                )
-            return await func(request, *args, **kwargs)
-        return wrapper
-    return decorator
+def rate_limit(rl: RateLimiter, max_requests: int, window: int):
+    async def _rate_limiter(request: Annotated[Request, Request]):
+        key = f"rate_limit:{request.url.path}:{window}:{max_requests}:{request.client.host}"
+        if await rl.is_rate_limited(key, max_requests, window):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=get_rate_limited_message(max_requests, window)
+            )
+    return _rate_limiter
