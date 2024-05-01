@@ -66,13 +66,34 @@ def get_rate_limited_message(max_requests, window):
 
 
 def rate_limiter(rl: RateLimiterConnection, max_requests: int, window: int,
-                 user: Union[Callable, None] = None):
+                 path: Union[str, None] = None, user: Union[Callable, None] = None):
+    """
+    Rate limiter dependency for FastAPI
+    :param rl: RateLimiterConnection object, used for lookup on Redis
+    :param max_requests: Max # of requests in given time window
+    :param window: Time window in seconds
+    :param path: Custom path.
+                 Can be used for a router-wide (or even API-wide) rate limit that applies to all
+                 endpoints together, rather than each endpoint separately. For such a use case,
+                 the dependency should be placed in the router or app constructor call, preferably
+                 with the path parameter being equal to the router's prefix (for readability).
+                 If None, the path of the request URL is used, creating a per-endpoint limit.
+    :param user: Custom user callable.
+                 Can be used with a custom callable that extracts the username from request header
+                 in order to have a per-user rate-limit, rather than per-IP.
+                 If None, the host of the client is used as the username.
+    :return: Rate limiting callable to be used as FastAPI dependency
+    """
     async def _rate_limit(request: Request):
         if user is None:
-            key = f"rate_limit:{request.url.path}:{window}:{max_requests}:{request.client.host}"
+            user_name = request.client.host
         else:
             user_name = user(request.headers)
-            key = f"rate_limit:{request.url.path}:{window}:{max_requests}:{user_name}"
+        if path is None:
+            path_name = request.url.path
+        else:
+            path_name = path
+        key = f"rate_limit:{path_name}:{window}:{max_requests}:{user_name}"
         if await rl.is_rate_limited(key, max_requests, window):
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
