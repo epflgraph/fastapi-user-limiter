@@ -2,6 +2,7 @@ import redis.asyncio as redis
 from fastapi import Request, HTTPException, status
 import time
 import random
+from typing import Union, Callable
 
 
 DEFAULT_REDIS_URL = 'redis://localhost:6379/1'
@@ -64,9 +65,14 @@ def get_rate_limited_message(max_requests, window):
             f"are allowed every {window} seconds.")
 
 
-def rate_limiter(rl: RateLimiterConnection, max_requests: int, window: int):
+def rate_limiter(rl: RateLimiterConnection, max_requests: int, window: int,
+                 user: Union[Callable, None] = None):
     async def _rate_limit(request: Request):
-        key = f"rate_limit:{request.url.path}:{window}:{max_requests}:{request.client.host}"
+        if user is None:
+            key = f"rate_limit:{request.url.path}:{window}:{max_requests}:{request.client.host}"
+        else:
+            user_name = user(request.headers)
+            key = f"rate_limit:{request.url.path}:{window}:{max_requests}:{user_name}"
         if await rl.is_rate_limited(key, max_requests, window):
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
