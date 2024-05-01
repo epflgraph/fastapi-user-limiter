@@ -65,7 +65,8 @@ def get_rate_limited_message(max_requests, window):
             f"are allowed every {window} seconds.")
 
 
-def rate_limiter(rl: RateLimiterConnection, max_requests: int, window: int,
+def rate_limiter(rl: RateLimiterConnection,
+                 max_requests: Union[int, None], window: Union[int, None],
                  path: Union[str, None] = None, user: Union[Callable, None] = None):
     """
     Rate limiter dependency for FastAPI
@@ -85,14 +86,20 @@ def rate_limiter(rl: RateLimiterConnection, max_requests: int, window: int,
     :return: Rate limiting callable to be used as FastAPI dependency
     """
     async def _rate_limit(request: Request):
+        # Providing a None value for either window or max_requests disables rate limiting
+        if max_requests is None or window is None:
+            return
+        # Checking to see if a custom callable has been provided for the username
         if user is None:
             user_name = request.client.host
         else:
             user_name = user(request.headers)
+        # Checking to see if a custom path has been provided
         if path is None:
             path_name = request.url.path
         else:
             path_name = path
+        # Generating the redis key
         key = f"rate_limit:{path_name}:{window}:{max_requests}:{user_name}"
         if await rl.is_rate_limited(key, max_requests, window):
             raise HTTPException(
