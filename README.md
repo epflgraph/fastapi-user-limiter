@@ -18,7 +18,7 @@ All the examples below can be found in `example.py` (use ` uvicorn example:app -
 You can use the `rate_limit` function as a FastAPI Dependency to add one or several rate limiters to an endpoint:
 
 ```python
-from fastapi_user_limiter.limiter import RateLimiterConnection, rate_limiter
+from fastapi_user_limiter.limiter import rate_limiter
 from fastapi import FastAPI, Depends
 
 app = FastAPI()
@@ -26,15 +26,15 @@ app = FastAPI()
 
 # Max 2 requests per 5 seconds
 @app.get("/single",
-         dependencies=[Depends(rate_limiter(RateLimiterConnection(), 2, 5))])
+         dependencies=[Depends(rate_limiter(2, 5))])
 async def read_single():
     return {"Hello": "World"}
 
 
 # Max 1 requests per second and max 3 requests per 10 seconds
 @app.get("/multi/{some_param}", dependencies=[
-    Depends(rate_limiter(RateLimiterConnection(), 1, 1)),
-    Depends(rate_limiter(RateLimiterConnection(), 3, 10))
+    Depends(rate_limiter(1, 1)),
+    Depends(rate_limiter(3, 10))
 ])
 async def read_multi(some_param: str):
     return {"Hello": f"There {some_param}"}
@@ -46,7 +46,7 @@ You can also add a router-wide (or even API-wide) rate limiter that applies to a
 rather than per-endpoint:
 
 ```python
-from fastapi_user_limiter.limiter import RateLimiterConnection, rate_limiter
+from fastapi_user_limiter.limiter import rate_limiter
 from fastapi import Depends, APIRouter
 
 # The rate limiter in the router applies to the two endpoints together.
@@ -57,20 +57,20 @@ from fastapi import Depends, APIRouter
 # the same as the router's prefix value.
 router = APIRouter(
     prefix='/router',
-    dependencies=[Depends(rate_limiter(RateLimiterConnection(), 1, 3,
+    dependencies=[Depends(rate_limiter(1, 3,
                                        path='/router'))]
 )
 
 
 # Each endpoint also has its own, separate rate limiter
 @router.get("/single",
-            dependencies=[Depends(rate_limiter(RateLimiterConnection(), 3, 20))])
+            dependencies=[Depends(rate_limiter(3, 20))])
 async def read_single_router():
     return {"Hello": "World"}
 
 
 @router.get("/single2",
-            dependencies=[Depends(rate_limiter(RateLimiterConnection(), 5, 60))])
+            dependencies=[Depends(rate_limiter(5, 60))])
 async def read_single2_router():
     return {"Hello": "There"}
 ```
@@ -84,7 +84,7 @@ API has authentication. To do so, you can pass a custom async callable to the
 headers:
 
 ```python
-from fastapi_user_limiter.limiter import RateLimiterConnection, rate_limiter
+from fastapi_user_limiter.limiter import rate_limiter
 from fastapi import Depends, FastAPI
 
 app = FastAPI()
@@ -98,7 +98,7 @@ def get_user(headers):
 
 # 3 requests max per 20 seconds, per user
 @app.post("/auth",
-          dependencies=[Depends(rate_limiter(RateLimiterConnection(), 3, 20,
+          dependencies=[Depends(rate_limiter(3, 20,
                                              user=get_user))])
 async def read_with_auth(data: dict):
     return {'input': data}
