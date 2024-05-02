@@ -20,7 +20,7 @@ class RateLimiterConnection:
         Initializes the Redis connection
         :return: None
         """
-        if self.redis is None or not await self.redis.ping():
+        if self.redis is None:
             self.redis = await redis.from_url(self.redis_url)
 
     async def is_rate_limited(self, key: str, max_requests: int, window: int) -> bool:
@@ -65,12 +65,11 @@ def get_rate_limited_message(max_requests, window):
             f"are allowed every {window} seconds.")
 
 
-def rate_limiter(rl: Union[RateLimiterConnection, None] = None,
-                 max_requests: Union[int, None] = 10, window: Union[int, None] = 1,
-                 path: Union[str, None] = None, user: Union[Callable, None] = None):
+def rate_limiter(max_requests: Union[int, None] = 10, window: Union[int, None] = 1,
+                 path: Union[str, None] = None, user: Union[Callable, None] = None,
+                 redis_url: Union[str, None] = None):
     """
     Rate limiter dependency for FastAPI
-    :param rl: RateLimiterConnection object, used for lookup on Redis
     :param max_requests: Max # of requests in given time window
     :param window: Time window in seconds
     :param path: Custom path.
@@ -83,9 +82,11 @@ def rate_limiter(rl: Union[RateLimiterConnection, None] = None,
                  Can be used with a custom callable that extracts the username from request header
                  in order to have a per-user rate-limit, rather than per-IP.
                  If None, the host of the client is used as the username.
-    :return: Rate limiting callable to be used as FastAPI dependency
+    :param redis_url: URL for Redis server
+    :return: Rate limiting async callable to be used as FastAPI dependency
     """
     async def _rate_limit(request: Request):
+        rl = RateLimiterConnection(redis_url)
         # Providing a None value for either window or max_requests disables rate limiting
         if rl is None or max_requests is None or window is None:
             return
@@ -107,3 +108,13 @@ def rate_limiter(rl: Union[RateLimiterConnection, None] = None,
                 detail=get_rate_limited_message(max_requests, window)
             )
     return _rate_limit
+
+
+def dummy_rate_limiter():
+    """
+    Dummy rate limiter for pytest dependency override
+    :return: dummy rate limiter async callable
+    """
+    async def _dummy_limiter():
+        return
+    return _dummy_limiter
