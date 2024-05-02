@@ -65,8 +65,8 @@ def get_rate_limited_message(max_requests, window):
             f"are allowed every {window} seconds.")
 
 
-def rate_limiter(rl: RateLimiterConnection,
-                 max_requests: Union[int, None], window: Union[int, None],
+def rate_limiter(rl: Union[RateLimiterConnection, None] = None,
+                 max_requests: Union[int, None] = 10, window: Union[int, None] = 1,
                  path: Union[str, None] = None, user: Union[Callable, None] = None):
     """
     Rate limiter dependency for FastAPI
@@ -87,7 +87,7 @@ def rate_limiter(rl: RateLimiterConnection,
     """
     async def _rate_limit(request: Request):
         # Providing a None value for either window or max_requests disables rate limiting
-        if max_requests is None or window is None:
+        if rl is None or max_requests is None or window is None:
             return
         # Checking to see if a custom callable has been provided for the username
         if user is None:
