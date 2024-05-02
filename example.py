@@ -44,7 +44,7 @@ async def read_single(data: dict):
     return {'input': data}
 
 
-def get_user(headers):
+async def get_user(headers):
     username = headers['authorization'].strip('Bearer ')
     return username
 

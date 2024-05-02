@@ -79,7 +79,7 @@ async def read_single2_router():
 
 By default, rate limits are applied per host (i.e. per IP address). However, 
 you may want to apply the rate limits on a per-user basis, especially if your
-API has authentication. To do so, you can pass a custom callable to the
+API has authentication. To do so, you can pass a custom async callable to the
 `user` argument of `rate_limiter`, which extracts the username from the request
 headers:
 

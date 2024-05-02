@@ -93,7 +93,7 @@ def rate_limiter(rl: Union[RateLimiterConnection, None] = None,
         if user is None:
             user_name = request.client.host
         else:
-            user_name = user(request.headers)
+            user_name = await user(request.headers)
         # Checking to see if a custom path has been provided
         if path is None:
             path_name = request.url.path
