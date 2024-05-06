@@ -104,7 +104,45 @@ async def read_with_auth(data: dict):
     return {'input': data}
 ```
 
-## Future features
+#### User-based rate limit overrides
+The async callable introduced above can be used to override `max_requests`
+and/or `window` values for specific users by returning a `dict` instead of
+a `str`. In the example below, the callable overrides and increases the 
+value of `max_requests` for the user `"admin"` and for the endpoint
+`/auth`:
 
-The package will soon have the additional feature of allowing each user account to have a different window size and max 
-request count for each endpoint.
+
+```python
+from fastapi_user_limiter.limiter import rate_limiter
+from fastapi import Depends, FastAPI
+from starlette.datastructures import Headers, URL
+
+
+app = FastAPI()
+
+
+# The user callable can return either of these two:
+# A. One single string containing the username
+# B. A dictionary that maps the key "username" to the username (obligatory), plus two optional keys:
+#     i. "max_requests": overriding the endpoint's original max_requests value for this particular user
+#     ii. "window": overriding the endpoint's original window value for this particular user
+# Provide a None to "max_requests" or "window" in order to disable rate limiting (for the given
+# user and endpoint).
+# If a dictionary without a "username" key is provided, an AssertionError is raised.
+
+async def get_user_with_override(headers: Headers, url: URL):
+    # This user callable returns a dictionary and overrides max_requests for the user "admin"
+    # when the endpoint's URL is '/auth'.
+    username = headers['authorization'].replace('Bearer ', '')
+    result_dict = {"username": username}
+    if username == 'admin' and url.path == '/auth':
+        result_dict['max_requests'] = 7
+    return result_dict
+
+# 3 requests max per 20 seconds, per user
+@app.post("/auth",
+          dependencies=[Depends(rate_limiter(3, 20,
+                                             user=get_user_with_override))])
+async def read_with_auth(data: dict):
+    return {'input': data}
+```
