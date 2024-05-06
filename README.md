@@ -90,10 +90,10 @@ from fastapi import Depends, FastAPI
 app = FastAPI()
 
 
-def get_user(headers):
+def get_user(headers, url):
     # The username is assumed to be a bearer token,
     # contained in the 'authorization' header.
-    username = headers['authorization'].strip('Bearer ')
+    username = headers['authorization'].replace('Bearer ', '')
     return username
 
 # 3 requests max per 20 seconds, per user
