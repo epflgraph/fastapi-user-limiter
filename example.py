@@ -1,5 +1,6 @@
 from fastapi_user_limiter.limiter import rate_limiter
 from fastapi import FastAPI, Depends, APIRouter
+from starlette.datastructures import Headers, URL
 
 router = APIRouter(
     prefix='/router',
@@ -44,13 +45,32 @@ async def read_single(data: dict):
     return {'input': data}
 
 
-async def get_user(headers):
-    username = headers['authorization'].strip('Bearer ')
+# The user callable can return either of these two:
+# A. One single string containing the username
+# B. A dictionary that maps the key "username" to the username (obligatory), plus two optional keys:
+#     i. "max_requests": overriding the endpoint's original max_requests value for this particular user
+#     ii. "window": overriding the endpoint's original window value for this particular user
+# Provide a None to "max_requests" or "window" in order to disable rate limiting (for the given
+# user and endpoint).
+# If a dictionary without a "username" key is provided, an AssertionError is raised.
+async def get_user(headers, url):
+    # This user callable returns a single string and does not override default rate limits.
+    username = headers['authorization'].replace('Bearer ', '')
     return username
+
+
+async def get_user_with_override(headers: Headers, url: URL):
+    # This user callable returns a dictionary and overrides max_requests for the user "admin"
+    # when the endpoint's URL is '/auth'.
+    username = headers['authorization'].replace('Bearer ', '')
+    result_dict = {"username": username}
+    if username == 'admin' and url.path == '/auth':
+        result_dict['max_requests'] = 7
+    return result_dict
 
 
 @app.post("/auth",
           dependencies=[Depends(rate_limiter(3, 20,
-                                             user=get_user))])
+                                             user=get_user_with_override))])
 async def read_with_auth(data: dict):
     return {'input': data}
