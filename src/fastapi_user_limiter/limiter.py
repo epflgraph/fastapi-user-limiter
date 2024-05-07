@@ -1,6 +1,6 @@
 import redis.asyncio as redis
 from fastapi import Request, HTTPException, status
-from starlette.datastructures import Headers, URL
+from starlette.datastructures import Headers
 import time
 import random
 from typing import Union, Callable

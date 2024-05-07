@@ -1,6 +1,6 @@
 from fastapi_user_limiter.limiter import rate_limiter
 from fastapi import FastAPI, Depends, APIRouter
-from starlette.datastructures import Headers, URL
+from starlette.datastructures import Headers
 
 router = APIRouter(
     prefix='/router',
