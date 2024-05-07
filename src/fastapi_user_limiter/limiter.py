@@ -68,7 +68,7 @@ def get_rate_limited_message(max_requests, window):
 
 def rate_limiter(max_requests: Union[int, None] = 10, window: Union[int, None] = 1,
                  path: Union[str, None] = None,
-                 user: Union[Callable[[Headers, URL], Union[str, dict]], None] = None,
+                 user: Union[Callable[[Headers, str], Union[str, dict]], None] = None,
                  redis_url: Union[str, None] = None):
     """
     Rate limiter dependency for FastAPI
@@ -94,11 +94,20 @@ def rate_limiter(max_requests: Union[int, None] = 10, window: Union[int, None] =
         n_max_requests = max_requests
         window_size = window
         rlc = RateLimiterConnection(redis_url)
+
+        # Checking to see if a custom path has been provided
+        if path is None:
+            path_name = request.url.path
+        else:
+            path_name = path
+
         # Checking to see if a custom callable has been provided for the username
         if user is None:
             user_name = request.client.host
         else:
-            user_output = await user(request.headers, request.url)
+            # The path value is passed to the user callable, regardless of whether
+            # it's the default value or a custom path
+            user_output = await user(request.headers, path_name)
             if isinstance(user_output, str):
                 user_name = user_output
             else:
@@ -110,11 +119,6 @@ def rate_limiter(max_requests: Union[int, None] = 10, window: Union[int, None] =
                 if n_max_requests is None or window_size is None:
                     return
 
-        # Checking to see if a custom path has been provided
-        if path is None:
-            path_name = request.url.path
-        else:
-            path_name = path
         # Generating the redis key
         key = f"rate_limit:{path_name}:{window_size}:{n_max_requests}:{user_name}"
         if await rlc.is_rate_limited(key, n_max_requests, window_size):

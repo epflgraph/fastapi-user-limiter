@@ -90,7 +90,7 @@ from fastapi import Depends, FastAPI
 app = FastAPI()
 
 
-def get_user(headers, url):
+def get_user(headers, path):
     # The username is assumed to be a bearer token,
     # contained in the 'authorization' header.
     username = headers['authorization'].replace('Bearer ', '')
@@ -130,12 +130,12 @@ app = FastAPI()
 # user and endpoint).
 # If a dictionary without a "username" key is provided, an AssertionError is raised.
 
-async def get_user_with_override(headers: Headers, url: URL):
+async def get_user_with_override(headers: Headers, path: str):
     # This user callable returns a dictionary and overrides max_requests for the user "admin"
     # when the endpoint's URL is '/auth'.
     username = headers['authorization'].replace('Bearer ', '')
     result_dict = {"username": username}
-    if username == 'admin' and url.path == '/auth':
+    if username == 'admin' and path == '/auth':
         result_dict['max_requests'] = 7
     return result_dict
 
